@@ -20,20 +20,20 @@ float posColor[] = {
 };
 
 const char* vertexSource ={
-    "version 330 core \n"
+    "#version 330 core \n"
     "layout (location = 0) in vec3 aPos; \n"
     "void main() \n"
     "{\n"
-    "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0)\n"
+    "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
     "}\0"
 };
 
 const char* fragmentSource = {
-    "version 330 core\n"
+    "#version 330 core\n"
     "out vec4 fragColor; \n"
     "void main()\n"
     "{\n"
-    "   fragColor = vec4(1.0, 0.0, 0.0, 1.0)\n"
+    "   fragColor = vec4(1.0, 0.0, 0.0, 1.0);\n"
     "}\0"
 };
 
@@ -92,7 +92,7 @@ void OpenGLWidget::initializeGL()
     glCompileShader(posShader);
     int success = -1;
     glGetShaderiv(posShader, GL_COMPILE_STATUS, &success);
-    if(0 != success)
+    if(GL_FALSE == success)
     {
         char logInfo[1024];
         glGetShaderInfoLog(posShader, 1024, nullptr, logInfo);
@@ -103,7 +103,7 @@ void OpenGLWidget::initializeGL()
     glShaderSource(fragmentShader, 1, &fragmentSource, nullptr);
     glCompileShader(fragmentShader);
     glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if(0 != success)
+    if(GL_FALSE == success)
     {
         char infoLog[1024];
         glGetShaderInfoLog(fragmentShader, 1024, nullptr, infoLog);
