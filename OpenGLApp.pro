@@ -11,11 +11,13 @@ CONFIG += c++17
 SOURCES += \
     OpenGLWidget.cpp \
     main.cpp \
-    Mainwindow.cpp
+    Mainwindow.cpp \
+    stb_image.cpp
 
 HEADERS += \
     Mainwindow.h \
-    OpenGLWidget.h
+    OpenGLWidget.h \
+    stb_image.h
 
 FORMS += \
     Mainwindow.ui

@@ -24,7 +24,10 @@ protected:
     void singleVboAndVaoBind();
     void interLeavedBuffer();
 
+    void initTexture();
 
+private:
+    GLuint m_texture;
 };
 
 #endif // OPENGLWIDGET_H

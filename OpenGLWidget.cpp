@@ -1,5 +1,8 @@
 #include "OpenGLWidget.h"
 #include <QDebug>
+#include <QImage>
+#include <QPixmap>
+#include "stb_image.h"
 
 float vertex[] = {
     0.0, 0.5, 0.0,
@@ -19,15 +22,24 @@ float posColor[] = {
     0.5, -0.5, 0.0, 0.0, 0.0, 1.0
 };
 
+float uvData[] = {
+    0.0, 0.0,
+    1.0, 0.0,
+    0.5, 1.0
+};
+
 const char* vertexSource ={
     "#version 330 core \n"
     "layout (location = 0) in vec3 aPos; \n"
     "layout (location = 1) in vec3 aColor; \n"
+    "layout (location = 2) in vec2 aUV;\n"
     "out vec3 color;\n"
+    "out vec2 uv;\n"
     "void main() \n"
     "{\n"
     "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
     "   color = aColor;\n"
+    "   uv = aUV;\n"
     "}\0"
 };
 
@@ -35,9 +47,11 @@ const char* fragmentSource = {
     "#version 330 core\n"
     "out vec4 fragColor; \n"
     "in vec3 color;\n"
+    "in vec2 uv;\n"
+    "uniform sampler2D sampler;\n"
     "void main()\n"
     "{\n"
-    "   fragColor = vec4(color, 1.0);\n"
+    "   fragColor = texture(sampler, uv);\n"
     "}\0"
 };
 
@@ -54,22 +68,6 @@ void OpenGLWidget::initializeGL()
     initializeOpenGLFunctions();
     glViewport(0, 0, 800, 600);
 
-    // //创建一个VBO VBO就是一块显存的编号
-    // GLuint vbo = 0;
-    // glGenBuffers(1, &vbo);
-    // //绑定当前vbo到状态机
-    // glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    // //数据传输给当前vbo，同时开辟显存
-    // glBufferData(GL_ARRAY_BUFFER, sizeof(vertex), vertex, GL_STATIC_DRAW);
-
-   // singleVboBind();
-
-  //  multVboBind();
-
-   // singleVboAndVaoBind();
-
-  //  interLeavedBuffer();
-
     GLuint posVBO = 0;
     glGenBuffers(1, &posVBO);
     glBindBuffer(GL_ARRAY_BUFFER,posVBO);
@@ -80,6 +78,10 @@ void OpenGLWidget::initializeGL()
     glBindBuffer(GL_ARRAY_BUFFER, colorVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW);
 
+    GLuint uvVBO = 0;
+    glGenBuffers(1, &uvVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, uvVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(uvData), uvData, GL_STATIC_DRAW);
 
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
@@ -90,6 +92,10 @@ void OpenGLWidget::initializeGL()
     glBindBuffer(GL_ARRAY_BUFFER, colorVBO);
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, uvVBO);
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2*sizeof(float), (void*)0);
 
     GLuint posShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(posShader, 1, &vertexSource, nullptr);
@@ -121,6 +127,8 @@ void OpenGLWidget::initializeGL()
 
     glDeleteShader(posShader);
     glDeleteShader(fragmentShader);
+
+    initTexture();
 }
 
 void OpenGLWidget::resizeGL(int width, int height)
@@ -132,8 +140,14 @@ void OpenGLWidget::paintGL()
 {
     glClearColor(0.8, 0.8, 0.5, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
+    glEnable(GL_TEXTURE_2D);
+
+    GLint location = glGetUniformLocation(program, "sampler");
+    glUniform1i(location, 0);
+
     glBindVertexArray(VAO);
     glUseProgram(program);
+
     glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
@@ -223,3 +237,32 @@ void OpenGLWidget::interLeavedBuffer()
     //解除VAO的绑定
     glBindVertexArray(0);
 }
+
+void OpenGLWidget::initTexture()
+{
+    glGenTextures(1, &m_texture);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_texture);
+
+    stbi_set_flip_vertically_on_load(true);
+    int w, h, channel;
+    unsigned char* data = stbi_load("D:\\Project\\OpenGLApp\\face.jpeg", &w, &h, &channel, STBI_rgb_alpha);
+
+    if(!data)
+    {
+        qDebug()<<"stbi read img failed";
+        return;
+    }
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    //设置纹理过滤方式
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    //设置纹理的包裹方式
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    stbi_image_free(data);
+
+}
+

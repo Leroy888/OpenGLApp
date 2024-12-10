@@ -2,6 +2,7 @@
     <qresource prefix="/">
         <file>Res/frag.gls</file>
         <file>Res/ver.gls</file>
+        <file>Res/images/face.jpeg</file>
     </qresource>
     <qresource prefix="/new">
         <file>Res/frag.gls</file>
